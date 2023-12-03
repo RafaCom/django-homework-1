@@ -56,15 +56,15 @@ class AdDetailView(DetailView):
             return JsonResponse({"error": "Not found"}, status=404)
 
         return JsonResponse({
-                "id": ad.pk,
-                "name": ad.name,
-                "author": ad.author.username,
-                "price": ad.price,
-                "description": ad.description,
-                "is_published": ad.is_published,
-                "category_id": ad.category_id,
-                "image": ad.image.url if ad.image else None
-            }, safe=False, status=200, json_dumps_params={'ensure_ascii': False})
+            "id": ad.pk,
+            "name": ad.name,
+            "author": ad.author.username,
+            "price": ad.price,
+            "description": ad.description,
+            "is_published": ad.is_published,
+            "category_id": ad.category_id,
+            "image": ad.image.url if ad.image else None
+        }, safe=False, status=200, json_dumps_params={'ensure_ascii': False})
 
 
 @method_decorator(csrf_exempt, name="dispatch")
@@ -139,13 +139,13 @@ class AdDeleteView(DeleteView):
         super().delete(request, *args, **kwargs)
 
         return JsonResponse({"status": "ok"}, status=200)
-    
+
 
 @method_decorator(csrf_exempt, name="dispatch")
 class AdUploadImageView(UpdateView):
     model = Ad
     fields = ['image']
-    
+
     def post(self, request, *args, **kwargs):
         self.object = self.get_object()
 
@@ -162,5 +162,3 @@ class AdUploadImageView(UpdateView):
             "category_id": self.object.category_id,
             "image": self.object.image.url if self.object.image else None
         })
-
-    
