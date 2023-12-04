@@ -2,7 +2,7 @@ from django.urls import path
 
 from ads.views.category import CategoryListView, CategoryDetailView, CategoryCreateView, CategoryUpdateView, CategoryDeleteView
 from ads.views.ads import AdsListView, AdDetailView, AdUpdateView, AdDeleteView, AdCreateView, AdUploadImageView
-from ads.views.users import UserListView
+from ads.views.users import UserListView, UserDetailView, UserCreateView
 from ads.views import service
 
 urlpatterns = [
@@ -22,5 +22,7 @@ urlpatterns = [
     path('ad/<int:pk>/upload_image/', AdUploadImageView.as_view()),
 
     path('user/', UserListView.as_view()),
+    path('user/<int:pk>/', UserDetailView.as_view()),
+    path('user/create/', UserCreateView.as_view())
 ]
 
