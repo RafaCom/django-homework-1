@@ -1,12 +1,13 @@
 import json
 
+from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
 from django.db.models import Count
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
-from django.views.generic import ListView, DetailView, CreateView, UpdateView
+from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
 
 from ads.models import User, Location
 from homework_1 import settings
@@ -69,13 +70,14 @@ class UserDetailView(DetailView):
 @method_decorator(csrf_exempt, name='dispatch')
 class UserCreateView(CreateView):
     model = User
-    fields = ["username", "first_name", "last_name", "role", "age", "location"]
+    fields = ["username", "password", "first_name", "last_name", "role", "age", "location"]
 
     def post(self, request, *args, **kwargs):
         user_data = json.loads(request.body)
 
         user = User.objects.create(
             username=user_data["username"],
+            password=user_data["password"],
             first_name=user_data["first_name"],
             last_name=user_data["last_name"],
             role=user_data["role"],
@@ -90,8 +92,6 @@ class UserCreateView(CreateView):
             user.locations.add(location_obj)
         user.save()
 
-        # user.locations.set(user_data["locations"])
-
         return JsonResponse({
             "id": user.id,
             "username": user.username,
@@ -103,8 +103,56 @@ class UserCreateView(CreateView):
         }, safe=False, status=200, json_dumps_params={'ensure_ascii': False})
 
 
+@method_decorator(csrf_exempt, name='dispatch')
 class UserUpdateView(UpdateView):
-    pass
+    model = User
+    fields = ["username", "password", "first_name", "last_name", "role", "age", "locations"]
+
+    def patch(self, request, *args, **kwargs):
+        super().post(request, *args, **kwargs)
+
+        user_data = json.loads(request.body)
+        self.object.username = user_data["username"]
+        self.object.password = user_data["password"]
+        self.object.first_name = user_data["first_name"]
+        self.object.last_name = user_data["last_name"]
+        self.object.role = user_data["role"]
+        self.object.age = user_data["age"]
+
+        for location in user_data["locations"]:
+            location_obj, created = Location.objects.get_or_create(
+                name=location,
+                defaults={"lat": 0, "lng": 0}
+            )
+            self.object.locations.add(location_obj)
+
+        try:
+            self.object.full_clean()
+        except ValidationError as e:
+            return JsonResponse(e.message_dict, status=422)
+
+        self.object.save()
+
+        return JsonResponse({
+            "id": self.object.id,
+            "username": self.object.username,
+            "first_name": self.object.first_name,
+            "last_name": self.object.last_name,
+            "role": self.object.role,
+            "age": self.object.age,
+            "locations": list(map(str, self.object.locations.all())),
+        }, safe=False, status=200, json_dumps_params={'ensure_ascii': False})
+
+
+@method_decorator(csrf_exempt, name="dispatch")
+class UserDeleteView(DeleteView):
+    model = User
+    success_url = "/"
+
+    def delete(self, request, *args, **kwargs):
+        super().delete(request, *args, **kwargs)
+
+        return JsonResponse({"status": "ok"}, status=200)
 
 
 
